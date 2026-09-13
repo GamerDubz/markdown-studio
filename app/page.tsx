@@ -1,69 +1,350 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { parseMarkdown } from '@/lib/markdown'
+
+const STARTER_MARKDOWN = `# Welcome to Markdown Studio
+A fast, distraction-free writing environment with real-time reading preview and GitHub Flavored Markdown (GFM) support.
+
+---
+
+## ⚡ Core Features
+- **Instant Live Preview**: Typed words render immediately without latency.
+- **GFM Compliant**: Tables, fenced code blocks, task lists, blockquotes, and formatting.
+- **Reading Analytics**: Real-time word count, character count, and reading time estimation.
+- **Local Persistence**: Drafts auto-save locally in your browser.
+
+---
+
+## 🛠️ Formatting Showcase
+
+### Typography & Emphasis
+You can write **bold text**, *italic thoughts*, ***bold italic statements***, or ~~strikethrough text~~ easily.
+
+### Task List
+- [x] Create project structure
+- [x] Configure Tailwind CSS styling
+- [x] Build robust Markdown parsing engine
+- [ ] Write documentation for users
+
+### Blockquotes
+> "Simplicity is prerequisite for reliability."
+> — *Edsger W. Dijkstra*
+
+### Code Blocks
+\`\`\`typescript
+interface UserProfile {
+  id: string;
+  name: string;
+  role: 'admin' | 'creator' | 'member';
+  active: boolean;
+}
+
+const greet = (user: UserProfile): string => {
+  return \`Welcome back, \${user.name}!\`;
+};
+\`\`\`
+
+### Data Tables
+| Feature | Supported | Performance |
+| :--- | :--- | :--- |
+| GFM Tables | Yes | Zero-latency |
+| Task Checkboxes | Yes | Instant |
+| Code Highlighting | Yes | Native |
+| Local Auto-Save | Yes | 100% Offline |
+
+---
+Enjoy writing!
+`
+
+export default function MarkdownStudioPage() {
+  const [content, setContent] = useState<string>(STARTER_MARKDOWN)
+  const [viewMode, setViewMode] = useState<'editor' | 'split' | 'preview'>('split')
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Load from LocalStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('markdown_studio_content')
+      if (saved) setContent(saved)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  // Auto-save to LocalStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('markdown_studio_content', content)
+    } catch {
+      // ignore
+    }
+  }, [content])
+
+  // Parse HTML
+  const renderedHtml = useMemo(() => {
+    return parseMarkdown(content)
+  }, [content])
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const trimmed = content.trim()
+    const words = trimmed ? trimmed.split(/\s+/).length : 0
+    const chars = content.length
+    const readMinutes = Math.max(1, Math.ceil(words / 200))
+    return { words, chars, readMinutes }
+  }, [content])
+
+  // Toast feedback
+  const showToast = (msg: string) => {
+    setToastMessage(msg)
+    setTimeout(() => setToastMessage(null), 2000)
+  }
+
+  // Insert formatting snippet at cursor
+  const insertText = (before: string, after = '') => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selected = content.substring(start, end)
+    const replacement = `${before}${selected || 'text'}${after}`
+    const updated = content.substring(0, start) + replacement + content.substring(end)
+    setContent(updated)
+
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + before.length, start + before.length + (selected ? selected.length : 4))
+    }, 0)
+  }
+
+  // Copy raw MD
+  const copyMarkdown = () => {
+    navigator.clipboard.writeText(content)
+    showToast('Markdown copied to clipboard!')
+  }
+
+  // Copy HTML
+  const copyHtml = () => {
+    navigator.clipboard.writeText(renderedHtml)
+    showToast('HTML copied to clipboard!')
+  }
+
+  // Download .md file
+  const downloadFile = () => {
+    const blob = new Blob([content], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `document-${Date.now()}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen flex flex-col bg-neutral-950 text-neutral-100 selection:bg-indigo-500 selection:text-white">
+      {/* Top Header */}
+      <header className="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-30 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20 font-mono text-sm">
+            M↓
+          </div>
+          <div>
+            <h1 className="text-base font-semibold leading-none flex items-center gap-2">
+              Markdown Studio
+              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">
+                GFM
+              </span>
+            </h1>
+            <p className="text-xs text-neutral-400 mt-0.5">Distraction-Free Markdown Writing &amp; Preview</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* View Mode Switcher */}
+        <div className="flex items-center gap-1 bg-neutral-900 border border-neutral-800 p-1 rounded-xl">
+          {[
+            { id: 'editor', label: 'Editor' },
+            { id: 'split', label: 'Split' },
+            { id: 'preview', label: 'Preview' },
+          ].map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setViewMode(m.id as typeof viewMode)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                viewMode === m.id ? 'bg-neutral-800 text-white shadow' : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={copyMarkdown}
+            className="px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-neutral-700 bg-neutral-900 hover:bg-neutral-850 text-xs font-medium text-neutral-300 transition-colors"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+            Copy MD
+          </button>
+          <button
+            onClick={copyHtml}
+            className="px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-neutral-700 bg-neutral-900 hover:bg-neutral-850 text-xs font-medium text-neutral-300 transition-colors"
+          >
+            Copy HTML
+          </button>
+          <button
+            onClick={downloadFile}
+            className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all active:scale-98"
+          >
+            Download .md
+          </button>
+        </div>
+      </header>
+
+      {/* Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-xl shadow-xl text-xs animate-bounce">
+          {toastMessage}
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className="border-b border-neutral-800/80 bg-neutral-900/40 px-6 py-2 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-1 text-xs">
+          <button
+            onClick={() => insertText('# ', '')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 font-bold"
+            title="Heading 1"
+          >
+            H1
+          </button>
+          <button
+            onClick={() => insertText('## ', '')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 font-bold"
+            title="Heading 2"
+          >
+            H2
+          </button>
+          <div className="w-[1px] h-4 bg-neutral-800 mx-1" />
+          <button
+            onClick={() => insertText('**', '**')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 font-bold"
+            title="Bold"
+          >
+            B
+          </button>
+          <button
+            onClick={() => insertText('*', '*')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 italic"
+            title="Italic"
+          >
+            I
+          </button>
+          <button
+            onClick={() => insertText('~~', '~~')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 line-through"
+            title="Strikethrough"
+          >
+            S
+          </button>
+          <div className="w-[1px] h-4 bg-neutral-800 mx-1" />
+          <button
+            onClick={() => insertText('`', '`')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 font-mono text-[11px]"
+            title="Inline Code"
+          >
+            &lt;/&gt;
+          </button>
+          <button
+            onClick={() => insertText('```typescript\n', '\n```')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 font-mono text-[11px]"
+            title="Code Block"
+          >
+            Code Block
+          </button>
+          <button
+            onClick={() => insertText('> ', '')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300"
+            title="Quote"
+          >
+            Quote
+          </button>
+          <button
+            onClick={() => insertText('- [ ] ', '')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300"
+            title="Task List"
+          >
+            Task
+          </button>
+          <button
+            onClick={() =>
+              insertText(
+                '| Header 1 | Header 2 |\n| :--- | :--- |\n| Cell 1 | Cell 2 |\n'
+              )
+            }
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300"
+            title="Table"
+          >
+            Table
+          </button>
+          <button
+            onClick={() => insertText('[Link Title](', 'https://example.com)')}
+            className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300"
+            title="Link"
+          >
+            Link
+          </button>
+        </div>
+
+        {/* Analytics stats */}
+        <div className="flex items-center gap-4 text-xs font-mono text-neutral-400">
+          <span>
+            Words: <strong className="text-neutral-200">{stats.words}</strong>
+          </span>
+          <span>
+            Chars: <strong className="text-neutral-200">{stats.chars}</strong>
+          </span>
+          <span>
+            Read Time: <strong className="text-neutral-200">~{stats.readMinutes} min</strong>
+          </span>
+        </div>
+      </div>
+
+      {/* Main Split / Editor / Preview Workspace */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Editor Pane */}
+        {(viewMode === 'editor' || viewMode === 'split') && (
+          <div
+            className={`flex-1 flex flex-col bg-neutral-950 ${
+              viewMode === 'split' ? 'border-r border-neutral-800' : ''
+            }`}
+          >
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Write your Markdown document here..."
+              spellCheck={false}
+              className="flex-1 w-full bg-transparent p-6 font-mono text-xs text-neutral-200 outline-none resize-none leading-relaxed selection:bg-indigo-500/30"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+          </div>
+        )}
+
+        {/* Preview Pane */}
+        {(viewMode === 'preview' || viewMode === 'split') && (
+          <div className="flex-1 flex flex-col bg-neutral-900/20 overflow-y-auto p-8 md:p-12">
+            <div className="max-w-3xl w-full mx-auto">
+              <div
+                dangerouslySetInnerHTML={{ __html: renderedHtml }}
+                className="prose prose-invert max-w-none text-neutral-200"
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }
