@@ -231,7 +231,7 @@ export default function MarkdownStudioPage() {
           >
             H2
           </button>
-          <div className="w-[1px] h-4 bg-neutral-800 mx-1" />
+          <div className="w-px h-4 bg-neutral-800 mx-1" />
           <button
             onClick={() => insertText('**', '**')}
             className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 font-bold"
@@ -253,7 +253,7 @@ export default function MarkdownStudioPage() {
           >
             S
           </button>
-          <div className="w-[1px] h-4 bg-neutral-800 mx-1" />
+          <div className="w-px h-4 bg-neutral-800 mx-1" />
           <button
             onClick={() => insertText('`', '`')}
             className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-300 font-mono text-[11px]"
