@@ -144,21 +144,24 @@ export default function MarkdownStudioPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-950 text-neutral-100 selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#0B0F19] text-slate-100 selection:bg-indigo-500 selection:text-white">
       {/* Top Header */}
-      <header className="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-30 px-6 py-3 flex items-center justify-between">
+      <header className="border-b border-slate-800 bg-[#0F1422]/80 backdrop-blur-md sticky top-0 z-30 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20 font-mono text-sm">
-            M↓
+          <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-indigo-600 via-indigo-500 to-purple-600 p-0.5 shadow-lg shadow-indigo-500/25 flex items-center justify-center">
+            <svg className="w-full h-full p-1" viewBox="0 0 32 32" fill="none">
+              <path d="M7 23V9L12 15L17 9V23" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M22 13V21M22 21L19.5 18.5M22 21L24.5 18.5" stroke="#38BDF8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
           <div>
             <h1 className="text-base font-semibold leading-none flex items-center gap-2">
               Markdown Studio
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 font-medium">
                 GFM
               </span>
             </h1>
-            <p className="text-xs text-neutral-400 mt-0.5">Distraction-Free Markdown Writing &amp; Preview</p>
+            <p className="text-xs text-slate-400 mt-0.5">Distraction-Free Markdown Writing &amp; Live Preview</p>
           </div>
         </div>
 
