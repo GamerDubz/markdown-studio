@@ -7,9 +7,6 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Markdown Studio — Distraction-Free Writing & Preview',
   description: 'Fast, calm, distraction-free Markdown editor with instant live preview, GFM tables, syntax highlighting, and reading statistics.',
-  icons: {
-    icon: '/favicon.svg',
-  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
