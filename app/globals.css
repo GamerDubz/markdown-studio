@@ -1,11 +1,301 @@
 @import "tailwindcss";
 
+:root {
+  /* Warm, high-contrast paper-and-ink palette. One accent, used sparingly. */
+  --color-paper: #f7f2e6;
+  --color-paper-raised: #efe6d2;
+  --color-paper-deep: #e6dabd;
+  --color-ink: #201b14;
+  --color-ink-soft: #55493a;
+  --color-ink-faint: #877a68;
+  --color-accent: #7a2542;
+  --color-accent-ink: #59152e;
+  --color-accent-soft: rgba(122, 37, 66, 0.1);
+  --color-accent-soft-strong: rgba(122, 37, 66, 0.16);
+  --color-rule: #ddcda3;
+  --color-rule-soft: #e9dfc4;
+  --color-mark-slit: var(--color-paper);
+  --color-mark-accent: var(--color-accent);
+
+  --font-body: var(--font-serif), 'Iowan Old Style', Georgia, serif;
+  --font-editor: var(--font-mono), ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --font-ui: var(--font-sans), system-ui, sans-serif;
+
+  --editor-line-height: 1.85rem;
+}
+
 * {
   box-sizing: border-box;
 }
 
+html {
+  color-scheme: light;
+}
+
 body {
-  background-color: #09090b;
-  color: #f4f4f5;
-  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--color-accent-soft-strong);
+  color: var(--color-ink);
+}
+
+/* Subtle paper grain — a fixed, non-repeating noise wash instead of a flat fill. */
+.paper-grain {
+  position: relative;
+  isolation: isolate;
+}
+.paper-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.13  0 0 0 0 0.11  0 0 0 0 0.08  0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Focus visibility — always distinct, never suppressed. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Custom warm scrollbars for the editor / preview panes. */
+.warm-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule) transparent;
+}
+.warm-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.warm-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--color-rule);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.warm-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.toast-rise {
+  animation: rise-in 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* The manuscript: styling for the rendered Markdown preview output. */
+/* ---------------------------------------------------------------- */
+.manuscript {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.manuscript > :first-child {
+  margin-top: 0;
+}
+
+.manuscript h1,
+.manuscript h2,
+.manuscript h3,
+.manuscript h4,
+.manuscript h5,
+.manuscript h6 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-ink);
+  line-height: 1.25;
+}
+
+.manuscript h1 {
+  font-size: 2.1rem;
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--color-rule);
+}
+.manuscript h2 {
+  font-size: 1.5rem;
+  margin: 2.1rem 0 0.8rem;
+}
+.manuscript h3 {
+  font-size: 1.25rem;
+  margin: 1.7rem 0 0.6rem;
+}
+.manuscript h4 {
+  font-size: 1.1rem;
+  margin: 1.4rem 0 0.5rem;
+}
+.manuscript h5,
+.manuscript h6 {
+  font-size: 1rem;
+  margin: 1.2rem 0 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-soft);
+}
+
+.manuscript p {
+  margin: 0 0 1.15em;
+}
+
+.manuscript strong {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.manuscript em {
+  font-style: italic;
+}
+
+.manuscript del {
+  color: var(--color-ink-faint);
+}
+
+.manuscript a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.manuscript a:hover {
+  color: var(--color-accent-ink);
+}
+
+.manuscript code {
+  font-family: var(--font-editor);
+  font-size: 0.86em;
+  background: var(--color-paper-raised);
+  color: var(--color-accent-ink);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+
+.manuscript .code-block {
+  margin: 1.6em 0;
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-paper-raised);
+}
+.manuscript .code-block__lang {
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid var(--color-rule);
+  font-family: var(--font-editor);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-faint);
+}
+.manuscript .code-block pre {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+}
+.manuscript .code-block code {
+  background: none;
+  padding: 0;
+  color: var(--color-ink);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.manuscript blockquote {
+  margin: 1.4em 0;
+  padding: 0.15rem 0 0.15rem 1.25rem;
+  border-left: 3px solid var(--color-accent);
+  color: var(--color-ink-soft);
+  font-style: italic;
+}
+
+.manuscript ul,
+.manuscript ol {
+  margin: 0 0 1.15em;
+  padding-left: 1.4em;
+}
+.manuscript li {
+  margin: 0.35em 0;
+}
+.manuscript li.task-item {
+  list-style: none;
+  margin-left: -1.4em;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6em;
+}
+.manuscript .task-checkbox {
+  accent-color: var(--color-accent);
+  width: 18px;
+  height: 18px;
+  margin-top: 0.2em;
+  flex-shrink: 0;
+}
+
+.manuscript .md-table-wrap {
+  margin: 1.6em 0;
+  overflow-x: auto;
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+}
+.manuscript table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+}
+.manuscript thead {
+  background: var(--color-paper-raised);
+}
+.manuscript th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--color-rule);
+}
+.manuscript td {
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--color-rule-soft);
+  color: var(--color-ink-soft);
+}
+
+.manuscript hr {
+  border: none;
+  border-top: 1px solid var(--color-rule);
+  margin: 2.2em 0;
+}
+
+.manuscript img {
+  max-width: 100%;
+  margin: 1em 0;
+  border-radius: 8px;
+  border: 1px solid var(--color-rule);
 }

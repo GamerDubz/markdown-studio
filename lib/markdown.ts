@@ -1,4 +1,7 @@
-// Robust GFM Markdown Parser with HTML sanitization
+// Compact GFM-flavoured Markdown parser with HTML escaping.
+// Output is unstyled semantic HTML (classes only where the tag itself
+// can't carry the hook) — visual styling lives in the ".manuscript"
+// rules in app/globals.css so this module stays a pure parser.
 
 function escapeHtml(str: string): string {
   return str
@@ -13,26 +16,29 @@ function parseInline(text: string): string {
   let result = escapeHtml(text)
 
   // Images: ![alt](url)
-  result = result.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="rounded-lg max-w-full my-3 border border-neutral-800" />')
+  result = result.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
 
   // Links: [text](url)
-  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 underline font-medium">$1</a>')
+  result = result.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+  )
 
   // Inline Code: `code`
-  result = result.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-neutral-800 text-indigo-300 font-mono text-[0.9em] border border-neutral-700/60">$1</code>')
+  result = result.replace(/`([^`]+)`/g, '<code>$1</code>')
 
   // Bold & Italic: ***text***
   result = result.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
 
   // Bold: **text**
-  result = result.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-neutral-100">$1</strong>')
+  result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
 
   // Italic: *text* or _text_
-  result = result.replace(/\*([^*]+)\*/g, '<em class="italic text-neutral-300">$1</em>')
-  result = result.replace(/_([^_]+)_/g, '<em class="italic text-neutral-300">$1</em>')
+  result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>')
+  result = result.replace(/_([^_]+)_/g, '<em>$1</em>')
 
   // Strikethrough: ~~text~~
-  result = result.replace(/~~([^~]+)~~/g, '<del class="line-through text-neutral-500">$1</del>')
+  result = result.replace(/~~([^~]+)~~/g, '<del>$1</del>')
 
   return result
 }
@@ -74,22 +80,22 @@ export function parseMarkdown(md: string): string {
         .map((c) => c.trim())
     )
 
-    let tableHtml = '<div class="overflow-x-auto my-4 border border-neutral-800 rounded-xl"><table class="w-full text-left text-xs border-collapse">'
+    let tableHtml = '<div class="md-table-wrap"><table>'
 
     // Header
     const headers = rows[0]
-    tableHtml += '<thead class="bg-neutral-900 text-neutral-300 border-b border-neutral-800"><tr>'
+    tableHtml += '<thead><tr>'
     headers.forEach((h) => {
-      tableHtml += `<th class="p-3 font-semibold">${parseInline(h)}</th>`
+      tableHtml += `<th>${parseInline(h)}</th>`
     })
     tableHtml += '</tr></thead>'
 
-    // Body (skip row 1 which is separator)
-    tableHtml += '<tbody class="divide-y divide-neutral-850">'
+    // Body (skip row 1, which is the separator)
+    tableHtml += '<tbody>'
     for (let i = 2; i < rows.length; i++) {
-      tableHtml += '<tr class="hover:bg-neutral-900/40">'
+      tableHtml += '<tr>'
       rows[i].forEach((cell) => {
-        tableHtml += `<td class="p-3 text-neutral-400">${parseInline(cell)}</td>`
+        tableHtml += `<td>${parseInline(cell)}</td>`
       })
       tableHtml += '</tr>'
     }
@@ -116,9 +122,9 @@ export function parseMarkdown(md: string): string {
         inCodeBlock = false
         const rawCode = escapeHtml(codeBuffer.join('\n'))
         htmlParts.push(
-          `<div class="my-4 rounded-xl border border-neutral-800 bg-neutral-950 overflow-hidden"><div class="px-4 py-1.5 border-b border-neutral-850 bg-neutral-900/80 text-[10px] font-mono text-neutral-500 uppercase">${escapeHtml(
+          `<div class="code-block"><div class="code-block__lang">${escapeHtml(
             codeLang || 'plaintext'
-          )}</div><pre class="p-4 text-xs font-mono text-indigo-300 overflow-x-auto"><code>${rawCode}</code></pre></div>`
+          )}</div><pre><code>${rawCode}</code></pre></div>`
         )
       }
       continue
@@ -148,7 +154,7 @@ export function parseMarkdown(md: string): string {
     // Horizontal rule
     if (/^(\*\*\*|---|___)$/.test(line.trim())) {
       closeList()
-      htmlParts.push('<hr class="my-6 border-neutral-800" />')
+      htmlParts.push('<hr />')
       continue
     }
 
@@ -158,16 +164,7 @@ export function parseMarkdown(md: string): string {
       closeList()
       const level = headingMatch[1].length
       const title = parseInline(headingMatch[2])
-      const classes = {
-        1: 'text-2xl font-bold text-white mt-6 mb-3 pb-2 border-b border-neutral-800',
-        2: 'text-xl font-bold text-neutral-100 mt-5 mb-2.5',
-        3: 'text-lg font-semibold text-neutral-200 mt-4 mb-2',
-        4: 'text-base font-semibold text-neutral-200 mt-3 mb-1.5',
-        5: 'text-sm font-semibold text-neutral-300 mt-2 mb-1',
-        6: 'text-xs font-semibold text-neutral-400 mt-2 mb-1',
-      }[level] || 'text-base'
-
-      htmlParts.push(`<h${level} class="${classes}">${title}</h${level}>`)
+      htmlParts.push(`<h${level}>${title}</h${level}>`)
       continue
     }
 
@@ -175,9 +172,7 @@ export function parseMarkdown(md: string): string {
     if (line.startsWith('>')) {
       closeList()
       const quoteContent = parseInline(line.replace(/^>\s?/, ''))
-      htmlParts.push(
-        `<blockquote class="border-l-4 border-indigo-500 pl-4 py-1 my-3 text-neutral-400 italic bg-neutral-900/30 rounded-r-lg">${quoteContent}</blockquote>`
-      )
+      htmlParts.push(`<blockquote>${quoteContent}</blockquote>`)
       continue
     }
 
@@ -188,16 +183,14 @@ export function parseMarkdown(md: string): string {
         closeList()
         inList = true
         listType = 'ul'
-        htmlParts.push('<ul class="space-y-1.5 my-3 pl-2">')
+        htmlParts.push('<ul>')
       }
       const checked = taskMatch[1].toLowerCase() === 'x'
       const label = parseInline(taskMatch[2])
       htmlParts.push(
-        `<li class="flex items-center gap-2 text-xs text-neutral-300"><input type="checkbox" ${
+        `<li class="task-item"><input type="checkbox" class="task-checkbox" ${
           checked ? 'checked' : ''
-        } disabled class="accent-indigo-500 rounded cursor-not-allowed" /><span class="${
-          checked ? 'line-through text-neutral-500' : ''
-        }">${label}</span></li>`
+        } disabled aria-hidden="true" /><span${checked ? ' style="text-decoration:line-through;color:var(--color-ink-faint)"' : ''}>${label}</span></li>`
       )
       continue
     }
@@ -209,7 +202,7 @@ export function parseMarkdown(md: string): string {
         closeList()
         inList = true
         listType = 'ul'
-        htmlParts.push('<ul class="list-disc list-inside space-y-1 my-3 text-xs text-neutral-300">')
+        htmlParts.push('<ul>')
       }
       htmlParts.push(`<li>${parseInline(ulMatch[1])}</li>`)
       continue
@@ -222,7 +215,7 @@ export function parseMarkdown(md: string): string {
         closeList()
         inList = true
         listType = 'ol'
-        htmlParts.push('<ol class="list-decimal list-inside space-y-1 my-3 text-xs text-neutral-300">')
+        htmlParts.push('<ol>')
       }
       htmlParts.push(`<li>${parseInline(olMatch[1])}</li>`)
       continue
@@ -230,7 +223,7 @@ export function parseMarkdown(md: string): string {
 
     // Regular paragraph
     closeList()
-    htmlParts.push(`<p class="text-xs leading-relaxed text-neutral-300 my-2">${parseInline(line)}</p>`)
+    htmlParts.push(`<p>${parseInline(line)}</p>`)
   }
 
   closeList()

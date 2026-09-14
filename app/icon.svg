@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="7" fill="#221d16" />
+  <path
+    d="M16 3c4.6 5 4.6 11.6 2.9 17.3C17.6 24.6 16.7 27.6 16 30c-.7-2.4-1.6-5.4-2.9-9.7C11.4 14.6 11.4 8 16 3Z"
+    fill="#f7f2e7"
+    fillRule="evenodd"
+  />
+  <path
+    d="M16 8.4c.62 0 1.12.5 1.12 1.12v13.2a1.12 1.12 0 1 1-2.24 0V9.52c0-.62.5-1.12 1.12-1.12Z"
+    fill="#221d16"
+  />
+  <rect
+    x="3"
+    y="19.4"
+    width="26"
+    height="3.1"
+    rx="1.55"
+    transform="rotate(-24 16 21)"
+    fill="#a8324f"
+  />
+</svg>
