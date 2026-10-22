@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+Use a patched Node.js runtime matching package.json engines (Node 24.22.1 or later in the 24.x line). npm package updates do not update Node itself.
+
 ## Getting Started
 
 First, run the development server:
